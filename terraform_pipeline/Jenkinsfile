@@ -57,16 +57,12 @@ pipeline {
 //   agent {
 //       label 'custom-ec2'
 //    }
+    agent any
 
   parameters {
     string(name: 'EC2_tag', description: 'Tag Name of the new EC2 instance to deploy', defaultValue: 'oracle')
   }
   stages {
-    stage('Checkout') {
-      steps {
-        checkout scm
-      }
-    }    
     stage("Installing terraform") {
       steps {     
         sh'''#!/bin/bash
