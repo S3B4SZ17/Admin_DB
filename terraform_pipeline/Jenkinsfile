@@ -1,0 +1,92 @@
+def wks
+def credID
+
+node {
+  script {
+    wks = "${env.WORKSPACE}"
+    if ( wks =~ /production\//) {
+        credID = 'vault-approle-prod'
+        path = 'secret/EC2/production'
+    } else {
+        credID = 'vault-approle'
+        path = 'secret/EC2'
+    }
+  }
+}
+
+def secrets = [
+  [ path: path + '/credentials',
+    engineVersion: 2,
+    secretValues: [
+        [ envVar: 'AWS_ACCESS_KEY_ID', vaultKey: 'AWS_ACCESS_KEY_ID' ]
+    ]
+  ],
+
+  [ path: path + '/credentials',
+    engineVersion: 2,
+    secretValues: [
+        [ envVar: 'AWS_SECRET_ACCESS_KEY', vaultKey: 'AWS_SECRET_ACCESS_KEY']
+    ]
+  ],
+
+  [ path: path+ '/credentials',
+    engineVersion: 2, \
+    secretValues: [
+        [ envVar: 'PUB_KEY', vaultKey: 'id_rsa']
+    ]
+  ],
+
+//   [ path: path+ '/${ENVIRONMENT}/credentials',
+//     engineVersion: 2, \
+//     secretValues: [
+//       [ envVar: 'ENV_KEY', vaultKey: 'KEY']
+//     ]
+//   ],
+
+]
+
+def configuration = [
+  vaultUrl: 'http://localhost:8200',
+  skipSslVerification: 'true',
+  vaultCredentialId: credID,
+  engineVersion: 2
+]
+
+pipeline {
+
+//   agent {
+//       label 'custom-ec2'
+//    }
+
+  parameters {
+    string(name: 'EC2_tag', description: 'Tag Name of the new EC2 instance to deploy', defaultValue: 'oracle')
+  }
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
+    }    
+    stage("Installing terraform") {
+      steps {     
+        sh'''#!/bin/bash
+            ##Install Terraform
+            source ./scripts/terraform_install.sh
+            binaries::installTerraform
+        '''
+       }
+    }
+    stage('Creating EC2 instance') {
+      steps {
+            sh '''
+            #!/bin/bash
+            cd terraform
+            echo "Intializing terraform"
+            terraform init
+
+            terraform apply -var KEY_NAME="id_rsa" -var PUB_KEY="${PUB_KEY}" -var TAG_INSTANCE="${EC2_tag}" -var AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" -var AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" -auto-approve
+            '''
+      }
+   }
+ }
+}
