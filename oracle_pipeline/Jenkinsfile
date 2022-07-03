@@ -1,11 +1,9 @@
 def wks
 def credID
-def ENV_STRIPPED
 
 node {
   script {
     wks = "${env.WORKSPACE}"
-    ENV_STRIPPED = params.ENVIRONMENT.tokenize("/").last()
     if ( wks =~ /production\//) {
         credID = 'vault-approle-prod'
         path = 'secret/EC2/production'
@@ -20,35 +18,42 @@ def secrets = [
   [ path: path + '/credentials',
     engineVersion: 2,
     secretValues: [
-        [ envVar: 'AWS_ACCESS_KEY_ID', vaultKey: 'AWS_ACCESS_KEY_ID' ]
-    ]
-  ],
-
-  [ path: path + '/credentials',
-    engineVersion: 2,
-    secretValues: [
-        [ envVar: 'AWS_SECRET_ACCESS_KEY', vaultKey: 'AWS_SECRET_ACCESS_KEY']
+        [ envVar: 'ORACLE_IP', vaultKey: 'Oracle_IP' ]
     ]
   ],
 
   [ path: path+ '/credentials',
     engineVersion: 2, \
     secretValues: [
-        [ envVar: 'PUB_KEY', vaultKey: 'id_rsa']
+        [ envVar: 'PRIVATE_KEY', vaultKey: 'id_rsa']
     ]
   ],
 
-//   [ path: path+ '/${ENVIRONMENT}/credentials',
-//     engineVersion: 2, \
-//     secretValues: [
-//       [ envVar: 'ENV_KEY', vaultKey: 'KEY']
-//     ]
-//   ],
+  [ path: path+ '/credentials',
+    engineVersion: 2, \
+    secretValues: [
+        [ envVar: 'PUB_KEY', vaultKey: 'id_rsa.pub']
+    ]
+  ],
+
+  [ path: path+ '/credentials',
+    engineVersion: 2, \
+    secretValues: [
+        [ envVar: 'DOCKER_PASSWORD', vaultKey: 'docker_password']
+    ]
+  ],
+
+  [ path: path+ '/credentials',
+    engineVersion: 2, \
+    secretValues: [
+        [ envVar: 'DOCKER_USERNAME', vaultKey: 'docker_username']
+    ]
+  ],
 
 ]
 
 def configuration = [
-  vaultUrl: 'http://localhost:8200',
+  vaultUrl: 'http://192.168.0.180:8200',
   skipSslVerification: 'true',
   vaultCredentialId: credID,
   engineVersion: 2
@@ -56,56 +61,38 @@ def configuration = [
 
 pipeline {
 
-//   agent {
-//       label 'custom-ec2'
-//    }
+    agent any
 
-  parameters {
-    string(name: 'ENVIRONMENT', description: 'Which SaaS account to deploy too', defaultValue: '')
-    string(name: 'CLUSTER_HOST', description: 'OCP Console Host to Deploy.', defaultValue: '')
-    string(name: 'CLUSTER_USER', description: 'Cluster Username. Leave empty if CLUSTER_PASS is a token.', defaultValue: '')
-    password(name: 'CLUSTER_PASS', description: 'OCP Password')
-    string(name: 'NAMESPACE', description: 'Namespace to Deploy', defaultValue: 'cp4s', trim: true )
-    string(name: 'TAGS', description: 'Tags of the validation elements to check. Comma separated list of tags: cluster,couchdb,tii,pods,nodes,clx,iscsequences,soar,images,entitlements,offerings,operator_images,catalogsource. Leave blank to check all.', defaultValue: 'cluster', trim: true )
-    string(name: 'RELEASE_BRANCH', description: 'Name of the branch of the repo that has the catalog images to compare with.https://github.ibm.com/security-secops/cp4s-operator-catalog-index Ex. release-1.9.0.0,release-1.9.0.0-uat, fp-1.9.1.0, fp-1.9.1.0-uat', defaultValue: 'develop', trim: true )
-    string(name: 'REPO_TAG', description: '(Optional) Repo tag for the catalog index. If value entered we will ignore the RELEASE_BRANCH and use the REPO_TAG', defaultValue: '', trim: true )
-  }
-  stages {
-    stage('Checkout') {
-      steps {
-        checkout scm
-      }
-    }    
-    stage("Installing terraform") {
-      steps {     
-        sh'''#!/bin/bash
-            ##Install Terraform
-            source ./scripts/terraform_install.sh
-            binaries::installTerraform
-        '''
-       }
+    parameters {
+        booleanParam(name: 'Oralce_install', description: '(Optional) Install Oracle in a container (default: no)')
     }
-    stage('Creating EC2 instance') {
-      steps {
-            sh '''
-            #!/bin/bash
-            cd terraform
-            terraform init
-            terraform apply 
-            '''
-
-        withVault([configuration: configuration, vaultSecrets: secrets]) {
-          sh '''
-          #!/bin/bash
-          set +x
-          if [ -z ${TAGS} ]; then
-            ansible-playbook -i ./cp4saas/post-validation/hosts ./cp4saas/post-validation/playbook.yml  --extra-vars="cp4s_url=$CP4S_URL functional_api_key=$FUNCTIONAL_API_KEY cp4s_key=$CLOUD_PAK_API_KEY accountid=$CUSTOMER_ACCOUNT_ID namespace=${NAMESPACE} cloudant_url_01=${CLOUDANT01_URL} cloudant_pass_01=${CLOUDANT01_PASS} cloudant_user_01=${CLOUDANT01_USER} cloudant_url_02=${CLOUDANT02_URL} cloudant_api_02=${CLOUDANT02_API} ansible_ssh_private_key_file=${SSH_KEY}"
-          else
-            ansible-playbook -i ./cp4saas/post-validation/hosts ./cp4saas/post-validation/playbook.yml  --extra-vars="cp4s_url=$CP4S_URL functional_api_key=$FUNCTIONAL_API_KEY cp4s_key=$CLOUD_PAK_API_KEY accountid=$CUSTOMER_ACCOUNT_ID namespace=${NAMESPACE} cloudant_url_01=${CLOUDANT01_URL} cloudant_pass_01=${CLOUDANT01_PASS} cloudant_user_01=${CLOUDANT01_USER} cloudant_url_02=${CLOUDANT02_URL} cloudant_api_02=${CLOUDANT02_API}" --tags ${TAGS}
-          fi
-          ''' 
+    stages {
+        stage('Installing Docker') {
+            steps {
+                withVault([configuration: configuration, vaultSecrets: secrets]) {
+                    sh '''
+                    #!/bin/bash
+                    set +x
+                    ansible-playbook -i ./oracle_pipeline/hosts.yml ./oracle_pipeline/docker_playbook.yml ansible_host=${ORACLE_IP}
+                    ''' 
+                }
+            }
         }
-      }
-   }
- }
+        stage('Installing Oracle') {
+            when {
+                expression {
+                    Oralce_install == 'true'
+                }
+            }
+            steps {
+                withVault([configuration: configuration, vaultSecrets: secrets]) {
+                    sh '''
+                    #!/bin/bash
+                    set +x
+                    ansible-playbook -i ./oracle_pipeline/hosts.yml ./oracle_pipeline/oracle_playbook.yml  --extra-vars="username=${DOCKER_USERNAME} password=${DOCKER_PASSWORD} ansible_host=${ORACLE_IP}
+                    ''' 
+                }
+            }
+        }
+    }
 }

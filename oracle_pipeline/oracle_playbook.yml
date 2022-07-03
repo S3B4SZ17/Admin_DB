@@ -1,0 +1,9 @@
+- hosts: ec2
+  gather_facts: true
+  any_errors_fatal: true
+  # become: yes
+  vars:
+    username: "username"
+    password: "password"
+  roles:
+    - oracle.install
