@@ -73,7 +73,7 @@ pipeline {
                     sh '''
                     #!/bin/bash
                     set +x
-                    ansible-playbook -i ./oracle_pipeline/hosts.yml ./oracle_pipeline/docker_playbook.yml ansible_host=${ORACLE_IP}
+                    ansible-playbook -i ./oracle_pipeline/hosts.yml ./oracle_pipeline/docker_playbook.yml --extra-vars="ansible_host=${ORACLE_IP}"
                     ''' 
                 }
             }
@@ -89,7 +89,7 @@ pipeline {
                     sh '''
                     #!/bin/bash
                     set +x
-                    ansible-playbook -i ./oracle_pipeline/hosts.yml ./oracle_pipeline/oracle_playbook.yml  --extra-vars="username=${DOCKER_USERNAME} password=${DOCKER_PASSWORD} ansible_host=${ORACLE_IP}
+                    ansible-playbook -i ./oracle_pipeline/hosts.yml ./oracle_pipeline/oracle_playbook.yml  --extra-vars="username=${DOCKER_USERNAME} password=${DOCKER_PASSWORD} ansible_host=${ORACLE_IP}"
                     ''' 
                 }
             }
