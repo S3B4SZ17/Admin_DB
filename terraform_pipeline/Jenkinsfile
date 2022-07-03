@@ -32,7 +32,7 @@ def secrets = [
   [ path: path+ '/credentials',
     engineVersion: 2, \
     secretValues: [
-        [ envVar: 'PUB_KEY', vaultKey: 'id_rsa']
+        [ envVar: 'PUB_KEY', vaultKey: 'id_rsa.pub']
     ]
   ],
 
@@ -46,7 +46,7 @@ def secrets = [
 ]
 
 def configuration = [
-  vaultUrl: 'http://localhost:8200',
+  vaultUrl: 'http://192.168.0.180:8200',
   skipSslVerification: 'true',
   vaultCredentialId: credID,
   engineVersion: 2
@@ -57,35 +57,69 @@ pipeline {
 //   agent {
 //       label 'custom-ec2'
 //    }
+    agent any
 
   parameters {
     string(name: 'EC2_tag', description: 'Tag Name of the new EC2 instance to deploy', defaultValue: 'oracle')
+    booleanParam(name: 'Terraforn_plan', description: '(Optional) Check the terraform plan before applying it (default: no)')
+    booleanParam(name: 'Terraforn_destroy', description: '(Optional) Destroy the current instances managed by terraform (default: no)')
+    booleanParam(name: 'Store_IP', description: '(Optional) Store the IP address of the oracle instance in Vult (default: no)')
   }
   stages {
-    stage('Checkout') {
-      steps {
-        checkout scm
-      }
-    }    
-    stage("Installing terraform") {
+    stage("Installing terraform and Ansible") {
       steps {     
         sh'''#!/bin/bash
             ##Install Terraform
-            source ./scripts/terraform_install.sh
+            source ./terraform_pipeline/scripts/terraform_install.sh
             binaries::installTerraform
+
+            source ./terraform_pipeline/scripts/ansible_install.sh
+            binaries::installAnsible
         '''
        }
     }
     stage('Creating EC2 instance') {
       steps {
-            sh '''
+        withVault([configuration: configuration, vaultSecrets: secrets]) {
+          sh '''
             #!/bin/bash
-            cd terraform
+            cd terraform_pipeline/terraform/
             echo "Intializing terraform"
             terraform init
 
-            terraform apply -var KEY_NAME="id_rsa" -var PUB_KEY="${PUB_KEY}" -var TAG_INSTANCE="${EC2_tag}" -var AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" -var AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" -auto-approve
+            if [ ${Terraforn_plan} = true ]; then
+              terraform plan -var KEY_NAME="id_rsa" -var PUB_KEY="${PUB_KEY}" -var TAG_INSTANCE="${EC2_tag}" -var AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" -var AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" 
+            elif [ ${Terraforn_destroy} = true ]; then
+              terraform apply -destroy -var KEY_NAME="id_rsa" -var PUB_KEY="${PUB_KEY}" -var TAG_INSTANCE="${EC2_tag}" -var AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" -var AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" -auto-approve
+            else
+              terraform apply -var KEY_NAME="id_rsa" -var PUB_KEY="${PUB_KEY}" -var TAG_INSTANCE="${EC2_tag}" -var AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" -var AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" -auto-approve
+            fi
             '''
+        }
+      }
+   }
+    stage('Storing IP address of EC2 instance') {
+      when {
+        expression {
+          params.Store_IP == 'true'
+        }
+      }
+      steps {
+        withCredentials([
+                [
+                    $class: 'VaultTokenCredentialBinding',
+                    credentialsId: credID,
+                    vaultAddr: 'http://192.168.0.180:8200'
+                ]
+            ]) 
+            {  
+              sh'''#!/bin/bash
+                  set +x
+                  export SECRETS=$(echo $SECRETS | sed s/,/" "/g)
+                  vault login -address=$VAULT_ADDR -no-print ${VAULT_TOKEN}
+                  vault kv patch ${SH_LOCATION} ${SECRETS}
+              '''
+            }
       }
    }
  }

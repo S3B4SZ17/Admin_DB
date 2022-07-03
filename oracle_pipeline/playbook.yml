@@ -1,9 +1,0 @@
-- hosts: ec2
-  gather_facts: true
-  any_errors_fatal: true
-  vars:
-    cp4s_application: "https://{{ domain }}"
-    new_relic_channels: "{{ new_relic.channels }}"
-    new_relic_conditions: "{{ new_relic.conditions }}"
-  roles:
-    - oracle.install

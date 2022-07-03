@@ -27,6 +27,19 @@ resource "aws_instance" "oracle_instance" {
   #     //private_key = file("/Users/sebastianzumbado/AWS_Certified_Dev/terraform_aws/.ssh/id_rsa")
   #     timeout     = "4m"
   #  }
+   # root disk
+  root_block_device {
+    volume_size           = "15"
+    volume_type           = "gp2"
+    delete_on_termination = true
+  }
+  # data disk
+  ebs_block_device {
+    device_name           = "/dev/xvda"
+    volume_size           = "10"
+    volume_type           = "gp2"
+    delete_on_termination = true
+  }
 
   tags = {
     Name = var.TAG_INSTANCE
@@ -59,9 +72,21 @@ resource "aws_security_group" "main" {
   }
 }
 
+# resource "aws_ebs_volume" "ora_volume" {
+#   availability_zone = "us-east-2a"
+#   size              = 20
+#   tags = {
+#     Name = var.TAG_INSTANCE
+#   }
+# }
 
 resource "aws_key_pair" "key_pair" {
   key_name   = var.KEY_NAME
   public_key = var.PUB_KEY
 }
 # https://jhooq.com/terraform-ssh-into-aws-ec2/
+
+output "instance_public_ip" {
+  description = "Public IP address of the EC2 instance"
+  value       = aws_instance.oracle_instance.public_ip
+}
