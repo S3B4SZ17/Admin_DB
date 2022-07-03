@@ -60,7 +60,7 @@
       - boto3
       - docker-compose
 
-- name: Add the jenkins user to the Docker group
+- name: Add the ec2-user user to the Docker group
   user:
-    name: "jenkins"
+    name: "ec2-user"
     group: docker

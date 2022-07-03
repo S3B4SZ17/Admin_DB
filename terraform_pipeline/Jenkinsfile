@@ -78,7 +78,7 @@ pipeline {
         '''
        }
     }
-    stage('Creating EC2 instance') {
+    stage('EC2 instance') {
       steps {
         withVault([configuration: configuration, vaultSecrets: secrets]) {
           sh '''
@@ -101,7 +101,7 @@ pipeline {
     stage('Storing IP address of EC2 instance') {
       when {
         expression {
-          params.Store_IP == 'true'
+          params.Store_IP == true
         }
       }
       steps {
