@@ -65,9 +65,15 @@ pipeline {
 
     parameters {
         booleanParam(name: 'Oralce_install', description: '(Optional) Install Oracle in a container (default: no)')
+        booleanParam(name: 'Docker_install', description: '(Optional) Install Docker in a container (default: no)')
     }
     stages {
         stage('Installing Docker') {
+            when {
+                expression {
+                    Docker_install == 'true'
+                }
+            }
             steps {
                 withVault([configuration: configuration, vaultSecrets: secrets]) {
                     sh '''
