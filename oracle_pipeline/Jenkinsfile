@@ -71,7 +71,7 @@ pipeline {
         stage('Installing Docker') {
             when {
                 expression {
-                    Docker_install == 'true'
+                    params.Docker_install == true
                 }
             }
             steps {
@@ -87,7 +87,7 @@ pipeline {
         stage('Installing Oracle') {
             when {
                 expression {
-                    Oralce_install == 'true'
+                    params.Oralce_install == true
                 }
             }
             steps {
