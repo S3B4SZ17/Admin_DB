@@ -35,6 +35,15 @@ variable "sg_protocols" {
       cidr_blocks = [ "0.0.0.0/0", ]
       self = false
     },
+
+#  Ingress for the Oracle port, to connect via sqlplus
+    {
+      from_port = 1521
+      to_port = 1521
+      protocol = "tcp"
+      cidr_blocks = [ "0.0.0.0/0", ]
+      self = false
+    },
   ]
 }
 

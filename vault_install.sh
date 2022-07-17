@@ -20,9 +20,11 @@ configure_Vualt(){
     policies="jenkins-policy"
 
     # Writing the jenkins-policy
-    echo "path "secret/*" {
-        capabilities = ['read','create','update']
-    }" > jenkins-policy.hcl
+    cat << EOF > jenkins-policy.hcl
+    path "secret/*" {
+        capabilities = ["read","create","update"]
+    }"
+    EOF
 
     # Applying the new policy
     vault policy write jenkins-policy jenkins-policy.hcl

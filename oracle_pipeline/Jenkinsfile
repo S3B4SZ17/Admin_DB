@@ -53,7 +53,7 @@ def secrets = [
 ]
 
 def configuration = [
-  vaultUrl: 'http://192.168.0.180:8200',
+  vaultUrl: 'http://192.168.0.130:8200',
   skipSslVerification: 'true',
   vaultCredentialId: credID,
   engineVersion: 2
