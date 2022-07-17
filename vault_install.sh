@@ -6,7 +6,7 @@ install_Vault(){
     docker run --name vault-docker --cap-add=IPC_LOCK -e 'VAULT_DEV_ROOT_TOKEN_ID=myroot' -e VAULT_ADDR='http://0.0.0.0:8200' -p 8200:8200 --network="jenkins" vault &
 }
 
-configure_Vualt(){
+configure_Vault(){
     # In this case is we are hardcoding the token. JUST FOR DEV
     vault login -no-print myroot
     
