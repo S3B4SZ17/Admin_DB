@@ -1,5 +1,26 @@
-- name: Install Oracle in a Docker container
+- name: Check if oracle_DB container is already running
+  docker_container_info:
+    name: oracle_DB
+  register: oracle_DB
+
+- name: Does the oracle_DB container exist?
+  debug:
+    msg: "The container oracle_DB {{ 'exists' if oracle_DB.exists else 'does not exist' }}"
+
+- name: Install the oracle_Db container
   ansible.builtin.shell: |
     docker volume create oracle_DB_volume
     docker login --username {{ username }} --password {{ password }} container-registry.oracle.com
     docker run -d --name oracle_DB -p 1521:1521 -p 8282:8282 -e ORACLE_PWD=Oralce_password123 -v oracle_DB_volume:/opt/oracle container-registry.oracle.com/database/enterprise
+  when: not oracle_DB.exists
+
+- name: Copy scripts directory to the EC2 instance
+  copy:
+    src: sql_scripts
+    dest: $HOME/
+    mode: u=rwx,g=r,o=r
+
+- name: Copy from EC2 scripts into the Oracle container
+  shell: |
+    docker cp sql_scripts/. oracle_DB:/home/oracle/proyecto_final/scripts
+    docker exec -u 0 -it oracle_DB chown -R oracle:oinstall /home/oracle/proyecto_final/scripts
