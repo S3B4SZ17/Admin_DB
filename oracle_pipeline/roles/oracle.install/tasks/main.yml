@@ -3,3 +3,12 @@
     docker volume create oracle_DB_volume
     docker login --username {{ username }} --password {{ password }} container-registry.oracle.com
     docker run -d --name oracle_DB -p 1521:1521 -p 8282:8282 -e ORACLE_PWD=Oralce_password123 -v oracle_DB_volume:/opt/oracle container-registry.oracle.com/database/enterprise
+
+- name: Copy scripts directory to the EC2 instance
+  copy:
+    src: sql_scripts
+    dest: $HOME/
+
+- name: Copy from EC2 scripts into the Oracle container
+  shell: |
+    docker cp sql_scripts/. oracle_DB:$HOME/proyecto_final/scripts
