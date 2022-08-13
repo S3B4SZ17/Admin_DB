@@ -24,9 +24,3 @@
   shell: |
     docker cp sql_scripts/. oracle_DB:/home/oracle/proyecto_final/scripts
     docker exec -u 0 -it oracle_DB chown -R oracle:oinstall /home/oracle/proyecto_final/scripts
-
-- name: Copy dir for the Analytic Workspace Manager 12.2
-  copy:
-    src: Analytic_Workspace_Manager_12.2
-    dest: $HOME/
-    mode: u=rwx,g=rx,o=r
