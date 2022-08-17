@@ -1,8 +1,0 @@
-OPTIONS (SKIP=1)
-LOAD DATA
-INFILE	    'CAMBIAR_RUTA\Cliente.CSV'
-BADFILE	    'CAMBIAR_RUTA\Cliente.BAD'
-DISCARDFILE 'CAMBIAR_RUTA\Cliente.DSC'
-APPEND INTO TABLE global.Clientes
-FIELDS TERMINATED BY ';'
-(idCliente,	Nombre, Apellido, Correo)
