@@ -14,13 +14,29 @@
     docker run -d --name oracle_DB -p 1521:1521 -p 8282:8282 -e ORACLE_PWD=Oralce_password123 -v oracle_DB_volume:/opt/oracle container-registry.oracle.com/database/enterprise
   when: not oracle_DB.exists
 
+- name: Start the Oracle container if it is stoppend
+  shell: |
+    docker start oracle_DB
+  when: oracle_DB.exists
+
 - name: Copy scripts directory to the EC2 instance
   copy:
     src: sql_scripts
     dest: $HOME/
     mode: u=rwx,g=r,o=r
 
-- name: Copy from EC2 scripts into the Oracle container
+- name: Copy from EC2 sql_scripts into the Oracle container
   shell: |
     docker cp sql_scripts/. oracle_DB:/home/oracle/proyecto_final/scripts
     docker exec -u 0 -it oracle_DB chown -R oracle:oinstall /home/oracle/proyecto_final/scripts
+
+- name: Copy Data directory to the EC2 instance
+  copy:
+    src: sql_data
+    dest: $HOME/
+    mode: u=rwx,g=r,o=r
+
+- name: Copy from EC2 sql_data into the Oracle container
+  shell: |
+    docker cp sql_data/. oracle_DB:/home/oracle/proyecto_final/sql_data
+    docker exec -u 0 -it oracle_DB chown -R oracle:oinstall /home/oracle/proyecto_final/sql_data
