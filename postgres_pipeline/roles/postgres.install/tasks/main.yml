@@ -24,18 +24,18 @@
     dest: $HOME/
     mode: u=rwx,g=r,o=r
 
-# - name: Copy from EC2 sql_scripts into the postgres container
-#   shell: |
-#     docker cp sql_scripts/. postgres_DB:/home/postgres/proyecto_final/scripts
-#     docker exec -u 0 -it postgres_DB chown -R postgres:oinstall /home/postgres/proyecto_final/scripts
+- name: Copy from EC2 sql_scripts into the postgres container
+  shell: |
+      docker exec -u postgres -it postgres_DB mkdir -p /var/lib/postgresql/cuboxcr/scripts
+      docker cp sql_scripts/. postgres_DB:/var/lib/postgresql/cuboxcr/scripts
 
-# - name: Copy Data directory to the EC2 instance
-#   copy:
-#     src: sql_data
-#     dest: $HOME/
-#     mode: u=rwx,g=r,o=r
+- name: Copy Data directory to the EC2 instance
+  copy:
+    src: sql_data
+    dest: $HOME/
+    mode: u=rwx,g=r,o=r
 
-# - name: Copy from EC2 sql_data into the postgres container
-#   shell: |
-#     docker cp sql_data/. postgres_DB:/home/postgres/proyecto_final/sql_data
-#     docker exec -u 0 -it postgres_DB chown -R postgres:oinstall /home/postgres/proyecto_final/sql_data
+- name: Copy from EC2 sql_data into the postgres container
+  shell: |
+    docker exec -u postgres -it postgres_DB mkdir -p /var/lib/postgresql/cuboxcr/sql_data
+    docker cp sql_data/. postgres_DB:/var/lib/postgresql/cuboxcr/sql_data
