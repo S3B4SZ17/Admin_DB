@@ -1,6 +1,7 @@
 #!/bin/bash
 # Use this for your user data (script from top to bottom)
 # install httpd (Linux 2 version)
+
 echo "Updating and installing upgrades and httpd"
 sudo yum update -y
 sudo yum install -y httpd

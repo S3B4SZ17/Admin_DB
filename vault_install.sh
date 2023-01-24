@@ -1,5 +1,6 @@
 #!/bin/bash
 # Install a dev Vault container
+set -eu
 
 install_Vault(){
     echo "Run a Dev Vault container"

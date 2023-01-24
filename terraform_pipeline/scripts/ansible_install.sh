@@ -1,6 +1,7 @@
 #!/bin/bash
 # Commands to install ansible inside the jenkins container
 # Connect to it: docker exec -u 0 -it jenkins-docker bash
+set -eu
 
 binaries::installAnsible(){
     ansible --version > /dev/null 2>&1

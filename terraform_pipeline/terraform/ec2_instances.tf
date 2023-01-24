@@ -1,8 +1,10 @@
 provider "aws" {
-  region = var.region[1]
+  region = var.region[0]
+  alias   = "sebaszh"
+  profile = "sebaszh"
     assume_role {
-    role_arn     = format("arn:aws:iam::%s:role/%s", var.management_account_id, var.tf_foundation_role)
-    session_name = "tf-admin"
+      role_arn     = format("arn:aws:iam::%s:role/%s", var.management_account_id, var.tf_foundation_role)
+      session_name = "gh-tf"
   }
 }
 

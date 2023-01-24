@@ -2,6 +2,8 @@
 ######################################
 # Script that will install a Jenkins server in a docker container
 ######################################
+set -eu
+
 install_Jenkins(){
   docker ps > /dev/null 2>&1
   if [[ $? -ne 0 ]]; then
@@ -27,3 +29,7 @@ install_Jenkins(){
 }
 
 install_Jenkins
+
+cat <<EOF > /etc/sudoers
+jenkins ALL=(ALL) NOPASSWD: ALL
+EOF

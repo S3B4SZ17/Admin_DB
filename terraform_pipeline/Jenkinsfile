@@ -46,7 +46,7 @@ def secrets = [
 ]
 
 def configuration = [
-  vaultUrl: 'http://192.168.0.130:8200',
+  vaultUrl: 'http://192.168.0.131:8200',
   skipSslVerification: 'true',
   vaultCredentialId: credID,
   engineVersion: 2
@@ -105,14 +105,7 @@ pipeline {
         }
       }
       steps {
-        withCredentials([
-                [
-                    $class: 'VaultTokenCredentialBinding',
-                    credentialsId: vault-approle,
-                    vaultAddr: 'http://192.168.0.180:8200'
-                ]
-            ]) 
-            {  
+        withVault([configuration: configuration, vaultSecrets: secrets]) { 
               sh'''#!/bin/bash
                   set +x
                   export SECRETS=$(echo $SECRETS | sed s/,/" "/g)

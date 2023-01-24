@@ -10,7 +10,7 @@
 - name: Install the postgres_DB container
   ansible.builtin.shell: |
     docker volume create postgres_DB_volume
-    docker run -itd -e POSTGRES_USER=postgres_DB -e POSTGRES_PASSWORD=Secure_postgres_password -p 5432:5432 -v postgres_DB_volume:/var/lib/postgresql/data --name postgres_DB postgres
+    docker run -itd -e POSTGRES_USER={{ username }} -e POSTGRES_PASSWORD={{ password }} -p 5432:5432 -v postgres_DB_volume:/var/lib/postgresql/data --name postgres_DB postgres
   when: not postgres_DB.exists
 
 - name: Start the postgres container if it is stoppend

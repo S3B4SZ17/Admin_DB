@@ -27,8 +27,6 @@
 
 - name: Clean yum metadata cache
   command: yum clean metadata
-  args:
-    warn: false
 
 - name: Ensure a list of yum packages are installed
   yum:

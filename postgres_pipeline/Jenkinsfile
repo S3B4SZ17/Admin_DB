@@ -53,9 +53,9 @@ def secrets = [
 ]
 
 def configuration = [
-  vaultUrl: 'http://192.168.0.130:8200',
+  vaultUrl: 'http://192.168.0.131:8200',
   skipSslVerification: 'true',
-  vaultCredentialId: vault-approle,
+  vaultCredentialId: credID,
   engineVersion: 2
 ]
 
@@ -64,7 +64,7 @@ pipeline {
     agent any
 
     parameters {
-        booleanParam(name: 'Oralce_install', description: '(Optional) Install postgres in a container (default: no)')
+        booleanParam(name: 'Postgres_install', description: '(Optional) Install postgres in a container (default: no)')
         booleanParam(name: 'Docker_install', description: '(Optional) Install Docker in a container (default: no)')
     }
     stages {
@@ -87,7 +87,7 @@ pipeline {
         stage('Installing postgres') {
             when {
                 expression {
-                    params.Oralce_install == true
+                    params.Postgres_install == true
                 }
             }
             steps {
