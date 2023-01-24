@@ -18,7 +18,7 @@ def secrets = [
   [ path: path + '/credentials',
     engineVersion: 2,
     secretValues: [
-        [ envVar: 'ORACLE_IP', vaultKey: 'Oracle_IP' ]
+        [ envVar: 'postgres_IP', vaultKey: 'postgres_IP' ]
     ]
   ],
 
@@ -55,7 +55,7 @@ def secrets = [
 def configuration = [
   vaultUrl: 'http://192.168.0.130:8200',
   skipSslVerification: 'true',
-  vaultCredentialId: credID,
+  vaultCredentialId: vault-approle,
   engineVersion: 2
 ]
 
@@ -64,7 +64,7 @@ pipeline {
     agent any
 
     parameters {
-        booleanParam(name: 'Oralce_install', description: '(Optional) Install Oracle in a container (default: no)')
+        booleanParam(name: 'Oralce_install', description: '(Optional) Install postgres in a container (default: no)')
         booleanParam(name: 'Docker_install', description: '(Optional) Install Docker in a container (default: no)')
     }
     stages {
@@ -79,12 +79,12 @@ pipeline {
                     sh '''
                     #!/bin/bash
                     set +x
-                    ansible-playbook -i ./oracle_pipeline/hosts.yml ./oracle_pipeline/docker_playbook.yml --extra-vars="ansible_host=${ORACLE_IP}"
+                    ansible-playbook -i ./postgres_pipeline/hosts.yml ./postgres_pipeline/docker_playbook.yml --extra-vars="ansible_host=${postgres_IP}"
                     ''' 
                 }
             }
         }
-        stage('Installing Oracle') {
+        stage('Installing postgres') {
             when {
                 expression {
                     params.Oralce_install == true
@@ -95,7 +95,7 @@ pipeline {
                     sh '''
                     #!/bin/bash
                     set +x
-                    ansible-playbook -i ./oracle_pipeline/hosts.yml ./oracle_pipeline/oracle_playbook.yml  --extra-vars="username=${DOCKER_USERNAME} password=${DOCKER_PASSWORD} ansible_host=${ORACLE_IP}"
+                    ansible-playbook -i ./postgres_pipeline/hosts.yml ./postgres_pipeline/postgres_playbook.yml --extra-vars="username=${DOCKER_USERNAME} password=${DOCKER_PASSWORD} ansible_host=${postgres_IP}"
                     ''' 
                 }
             }

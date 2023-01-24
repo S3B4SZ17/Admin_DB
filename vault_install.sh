@@ -8,6 +8,8 @@ install_Vault(){
 
 configure_Vault(){
     # In this case is we are hardcoding the token. JUST FOR DEV
+    export VAULT_ADDR='http://0.0.0.0:8200'
+
     vault login -no-print myroot
     
     # Enable Approle for authentication between machines (Jenkins and Vault)
@@ -20,11 +22,11 @@ configure_Vault(){
     policies="jenkins-policy"
 
     # Writing the jenkins-policy
-    cat << EOF > jenkins-policy.hcl
+    cat <<-EOF > jenkins-policy.hcl
     path "secret/*" {
         capabilities = ["read","create","update"]
-    }"
-    EOF
+    }
+EOF
 
     # Applying the new policy
     vault policy write jenkins-policy jenkins-policy.hcl

@@ -1,10 +1,12 @@
 provider "aws" {
   region = var.region[1]
-  access_key = var.AWS_ACCESS_KEY_ID
-  secret_key = var.AWS_SECRET_ACCESS_KEY
+    assume_role {
+    role_arn     = format("arn:aws:iam::%s:role/%s", var.management_account_id, var.tf_foundation_role)
+    session_name = "tf-admin"
+  }
 }
 
-resource "aws_instance" "oracle_instance" {
+resource "aws_instance" "postgres_instance" {
    ami = var.ami_id
    instance_type = var.instance_type
    key_name= var.KEY_NAME
@@ -88,5 +90,5 @@ resource "aws_key_pair" "key_pair" {
 
 output "instance_public_ip" {
   description = "Public IP address of the EC2 instance"
-  value       = aws_instance.oracle_instance.public_ip
+  value       = aws_instance.postgres_instance.public_ip
 }

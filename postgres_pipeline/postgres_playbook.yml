@@ -7,4 +7,4 @@
     username: "username"
     password: "password"
   roles:
-    - oracle.install
+    - postgres.install

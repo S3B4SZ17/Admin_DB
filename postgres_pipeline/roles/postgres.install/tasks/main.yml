@@ -1,0 +1,41 @@
+- name: Check if postgres_DB container is already running
+  docker_container_info:
+    name: postgres_DB
+  register: postgres_DB
+
+- name: Does the postgres_DB container exist?
+  debug:
+    msg: "The container postgres_DB {{ 'exists' if postgres_DB.exists else 'does not exist' }}"
+
+- name: Install the postgres_DB container
+  ansible.builtin.shell: |
+    docker volume create postgres_DB_volume
+    docker run -itd -e POSTGRES_USER=postgres_DB -e POSTGRES_PASSWORD=Secure_postgres_password -p 5432:5432 -v postgres_DB_volume:/var/lib/postgresql/data --name postgres_DB postgres
+  when: not postgres_DB.exists
+
+- name: Start the postgres container if it is stoppend
+  shell: |
+    docker start postgres_DB
+  when: postgres_DB.exists
+
+- name: Copy scripts directory to the EC2 instance
+  copy:
+    src: sql_scripts
+    dest: $HOME/
+    mode: u=rwx,g=r,o=r
+
+# - name: Copy from EC2 sql_scripts into the postgres container
+#   shell: |
+#     docker cp sql_scripts/. postgres_DB:/home/postgres/proyecto_final/scripts
+#     docker exec -u 0 -it postgres_DB chown -R postgres:oinstall /home/postgres/proyecto_final/scripts
+
+# - name: Copy Data directory to the EC2 instance
+#   copy:
+#     src: sql_data
+#     dest: $HOME/
+#     mode: u=rwx,g=r,o=r
+
+# - name: Copy from EC2 sql_data into the postgres container
+#   shell: |
+#     docker cp sql_data/. postgres_DB:/home/postgres/proyecto_final/sql_data
+#     docker exec -u 0 -it postgres_DB chown -R postgres:oinstall /home/postgres/proyecto_final/sql_data

@@ -38,8 +38,8 @@ variable "sg_protocols" {
 
 #  Ingress for the Oracle port, to connect via sqlplus
     {
-      from_port = 1521
-      to_port = 1521
+      from_port = 5432
+      to_port = 5432
       protocol = "tcp"
       cidr_blocks = [ "0.0.0.0/0", ]
       self = false
@@ -47,14 +47,14 @@ variable "sg_protocols" {
   ]
 }
 
-variable "AWS_ACCESS_KEY_ID" {
-  type = string
-  default = "AWS_ACCESS_KEY"
+variable "tf_foundation_role" {
+  description = "Name of the Terraform Foundation role that has all admin privileges for deploying any AWS resources through IaC"
+  type        = string
 }
 
-variable "AWS_SECRET_ACCESS_KEY" {
-  type = string
-  default = "AWS_SECRET"
+variable "management_account_id" {
+  description = "Account Id for the management account for AWS"
+  type        = string
 }
 
 variable "KEY_NAME" {

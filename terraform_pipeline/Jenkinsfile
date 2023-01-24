@@ -60,10 +60,10 @@ pipeline {
     agent any
 
   parameters {
-    string(name: 'EC2_tag', description: 'Tag Name of the new EC2 instance to deploy', defaultValue: 'oracle')
+    string(name: 'EC2_tag', description: 'Tag Name of the new EC2 instance to deploy', defaultValue: 'postgres')
     booleanParam(name: 'Terraforn_plan', description: '(Optional) Check the terraform plan before applying it (default: no)')
     booleanParam(name: 'Terraforn_destroy', description: '(Optional) Destroy the current instances managed by terraform (default: no)')
-    booleanParam(name: 'Store_IP', description: '(Optional) Store the IP address of the oracle instance in Vult (default: no)')
+    booleanParam(name: 'Store_IP', description: '(Optional) Store the IP address of the postgres instance in Vult (default: no)')
   }
   stages {
     stage("Installing terraform and Ansible") {
@@ -88,11 +88,11 @@ pipeline {
             terraform init
 
             if [ ${Terraforn_plan} = true ]; then
-              terraform plan -var KEY_NAME="id_rsa" -var PUB_KEY="${PUB_KEY}" -var TAG_INSTANCE="${EC2_tag}" -var AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" -var AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" -var instance_type="t3a.medium"
+              terraform plan -var KEY_NAME="id_rsa" -var PUB_KEY="${PUB_KEY}" -var TAG_INSTANCE="${EC2_tag}" -var management_account_id=809870132669 -var tf_foundation_role=github-tf-foundational-deploy-role -var instance_type="t3a.medium"
             elif [ ${Terraforn_destroy} = true ]; then
-              terraform apply -destroy -var KEY_NAME="id_rsa" -var PUB_KEY="${PUB_KEY}" -var TAG_INSTANCE="${EC2_tag}" -var AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" -var AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" -var instance_type="t3a.medium" -auto-approve
+              terraform apply -destroy -var KEY_NAME="id_rsa" -var PUB_KEY="${PUB_KEY}" -var TAG_INSTANCE="${EC2_tag}" -var management_account_id=809870132669 -var tf_foundation_role=github-tf-foundational-deploy-role -var instance_type="t3a.medium" -auto-approve
             else
-              terraform apply -var KEY_NAME="id_rsa" -var PUB_KEY="${PUB_KEY}" -var TAG_INSTANCE="${EC2_tag}" -var AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" -var AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" -var instance_type="t3a.medium" -auto-approve
+              terraform apply -var KEY_NAME="id_rsa" -var PUB_KEY="${PUB_KEY}" -var TAG_INSTANCE="${EC2_tag}" -var management_account_id=809870132669 -var tf_foundation_role=github-tf-foundational-deploy-role -var instance_type="t3a.medium" -auto-approve
             fi
             '''
         }
@@ -108,7 +108,7 @@ pipeline {
         withCredentials([
                 [
                     $class: 'VaultTokenCredentialBinding',
-                    credentialsId: credID,
+                    credentialsId: vault-approle,
                     vaultAddr: 'http://192.168.0.180:8200'
                 ]
             ]) 
